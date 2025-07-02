@@ -1,10 +1,10 @@
 #!/bin/zsh
 
 # Script Name: clone
-# Description: This script clones a GitHub repository and opens it in VS Code.
+# Description: This script clones a GitHub repository and opens it in Cursor (if installed)
+#              or VS Code as a fallback.
 # Usage: clone <github_repo_url> [folder_name]
 # Author: Your Name
-
 
 # Check for correct number of arguments
 if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
@@ -16,10 +16,10 @@ fi
 GITHUB_URL=$1
 
 # Extract repository name from URL
-REPO_NAME=$(basename -s .git $GITHUB_URL)
+REPO_NAME=$(basename -s .git "$GITHUB_URL")
 
 # Base directory where you want to clone the repo
-BASE_DIR="/Users/braden/Projects/"
+BASE_DIR="/Users/braden/Projects"
 
 # Additional folder name if specified
 if [ "$#" -eq 2 ]; then
@@ -27,7 +27,7 @@ if [ "$#" -eq 2 ]; then
     CLONE_DIR="$BASE_DIR/$ADDITIONAL_FOLDER"
 
     if [ ! -d "$CLONE_DIR" ]; then
-        read -q "REPLY?The folder $ADDITIONAL_FOLDER does not exist. Would you like to create it? (y/n)"
+        read -q "REPLY?The folder $ADDITIONAL_FOLDER does not exist. Create it? (y/n) "
         echo ""
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             mkdir -p "$CLONE_DIR" || { echo "Failed to create directory"; exit 1; }
@@ -44,10 +44,17 @@ fi
 cd "$CLONE_DIR" || { echo "Directory $CLONE_DIR does not exist"; exit 1; }
 
 # Clone the repository
-git clone $GITHUB_URL || { echo "Failed to clone repository"; exit 1; }
+git clone "$GITHUB_URL" || { echo "Failed to clone repository"; exit 1; }
 
 # Change to the repository directory
 cd "$REPO_NAME" || { echo "Failed to navigate to repository directory"; exit 1; }
 
-# Open in a new VS Code window
-code . || { echo "Failed to open VS Code"; exit 1; }
+# Open in Cursor if available, otherwise VS Code
+if command -v cursor >/dev/null 2>&1; then
+    cursor .
+elif command -v code >/dev/null 2>&1; then
+    code .
+else
+    echo "Neither Cursor nor VS Code is installed."
+    exit 1
+fi
